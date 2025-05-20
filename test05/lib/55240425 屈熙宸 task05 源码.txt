@@ -1,0 +1,1132 @@
+# include
+
+```cpp
+//commandinterface.h
+#ifndef COMMAND_INTERFACE_H
+#define COMMAND_INTERFACE_H
+
+#include <string>
+#include <iostream>
+#include "database.h"
+
+class CommandInterface {
+public:
+    CommandInterface(Database& db);
+    void run();
+
+private:
+    Database& database;
+
+    void processCommand(const std::string& command);
+    void displayHelp();
+};
+
+#endif // COMMAND_INTERFACE_H
+
+//database.h
+#ifndef DATABASE_H
+#define DATABASE_H
+
+#include <string>
+#include <map>
+#include <memory>
+#include "table.h"
+
+class Database {
+public:
+    Database(const std::string& name, const std::string& userEmail = "");
+    ~Database();
+
+    bool createTable(const std::string& tableName, const std::vector<std::pair<std::string, std::string>>& schema);
+    bool dropTable(const std::string& tableName);
+    std::shared_ptr<Table> getTable(const std::string& tableName);
+    std::vector<std::string> listTables() const;
+    
+    std::string getName() const;
+    bool save() const;
+    bool load();
+
+private:
+    std::string name;
+    std::string userEmail; 
+    std::map<std::string, std::shared_ptr<Table>> tables;
+    std::string getFilePath() const;
+};
+
+#endif // DATABASE_H
+
+//queryprocessor.h
+#ifndef QUERY_PROCESSOR_H
+#define QUERY_PROCESSOR_H
+
+#include <string>
+#include <iostream>
+#include <vector>
+#include "database.h"
+
+class QueryProcessor {
+public:
+    QueryProcessor(Database& db);
+    
+    std::string processQuery(const std::string& query);
+
+private:
+    Database& database;
+    std::string query;
+    
+    std::string createTable(const std::vector<std::string>& tokens);
+    std::string dropTable(const std::vector<std::string>& tokens);
+    std::string insertInto(const std::vector<std::string>& tokens);
+    std::string selectFrom(const std::vector<std::string>& tokens);
+    std::string updateTable(const std::vector<std::string>& tokens);
+    std::string deleteFrom(const std::vector<std::string>& tokens);
+    
+    std::vector<std::string> tokenize(const std::string& query);
+    std::string formatResults(const std::vector<Record>& records);
+};
+
+#endif // QUERY_PROCESSOR_H
+
+//record.h
+#ifndef RECORD_H
+#define RECORD_H
+
+#include <string>
+#include <vector>
+#include <map>
+
+class Record {
+public:
+    Record(const std::vector<std::pair<std::string, std::string>>& schema);
+    
+    void setValue(const std::string& field, const std::string& value);
+    std::string getValue(const std::string& field) const;
+    std::map<std::string, std::string> getAllValues() const;
+    
+    bool save(std::ostream& out) const;
+    bool load(std::istream& in, const std::vector<std::pair<std::string, std::string>>& schema);
+
+private:
+    std::map<std::string, std::string> values;
+    std::vector<std::pair<std::string, std::string>> schema;
+};
+
+#endif // RECORD_H
+
+//table.h
+
+#ifndef TABLE_H
+#define TABLE_H
+
+#include <string>
+#include <vector>
+#include <map>
+#include "record.h"
+
+class Table {
+public:
+    Table(const std::string& name, const std::vector<std::pair<std::string, std::string>>& schema);
+    ~Table();
+
+    bool insert(const std::vector<std::string>& values);
+    std::vector<Record> select(const std::string& condition = "");
+    bool update(const std::map<std::string, std::string>& values, const std::string& condition = "");
+    bool deleteRecords(const std::string& condition = "");
+    
+    std::string getName() const;
+    std::vector<std::pair<std::string, std::string>> getSchema() const;
+    std::vector<Record> getRecords() const;
+    
+    bool save(std::ostream& out) const;
+    bool load(std::istream& in);
+
+private:
+    std::string name;
+    std::vector<std::pair<std::string, std::string>> schema;
+    std::vector<Record> records;
+    
+    bool evaluateCondition(const Record& record, const std::string& condition) const;
+};
+
+#endif // TABLE_H
+
+//user_manager.h
+#ifndef USER_MANAGER_H
+#define USER_MANAGER_H
+
+#include <string>
+#include <map>
+#include <vector>
+#include <fstream>
+
+struct User {
+    std::string email;
+    std::string passwordHash;
+};
+
+class UserManager {
+public:
+    UserManager();
+    ~UserManager();
+    
+    bool registerUser(const std::string& email, const std::string& password);
+    bool loginUser(const std::string& email, const std::string& password);
+    bool isEmailValid(const std::string& email);
+    bool isPasswordValid(const std::string& password);
+    std::string getCurrentUser() const;
+    
+private:
+    std::map<std::string, User> users;
+    std::string currentUser;
+    
+    bool loadUsers();
+    bool saveUsers();
+    std::string hashPassword(const std::string& password);
+    std::string getUsersFilePath() const;
+};
+
+#endif // USER_MANAGER_H
+```
+
+# src
+
+```cpp
+//commaninterface.cpp
+#include "command_interface.h"
+#include "query_processor.h"
+#include <iostream>
+#include <string>
+
+CommandInterface::CommandInterface(Database& db) : database(db) {}
+
+void CommandInterface::run() {
+    std::cout << "WELCOME TO DBMS" << std::endl;
+    std::cout << "数据库: " << database.getName() << " 已加载" << std::endl;
+    displayHelp();
+    
+    std::string command;
+    QueryProcessor processor(database);
+    
+    while (true) {
+        std::cout << "\n> ";
+        std::getline(std::cin, command);
+        
+        if (command == "exit" || command == "quit") {
+            std::cout << "保存数据库并退出..." << std::endl;
+            if (database.save()) {
+            std::cout << "数据保存成功！" << std::endl;
+            } else {
+            std::cout << "警告: 数据保存失败！" << std::endl;
+            }
+            break;
+        }else if (command == "help") {
+            displayHelp();
+        } else {
+            try {
+                std::string result = processor.processQuery(command);
+                std::cout << result << std::endl;
+            } catch (const std::exception& e) {
+                std::cout << "错误: " << e.what() << std::endl;
+            }
+        }
+    }
+}
+
+void CommandInterface::displayHelp() {
+    std::cout << "\n可用命令(基于SQL语言):" << std::endl;
+    std::cout << "  CREATE TABLE 表名 (列名1 类型1, 列名2 类型2, ...)" << std::endl;
+    std::cout << "  DROP TABLE 表名" << std::endl;
+    std::cout << "  INSERT INTO 表名 VALUES (值1, 值2, ...)" << std::endl;
+    std::cout << "  SELECT * FROM 表名 [WHERE 条件]" << std::endl;
+    std::cout << "  UPDATE 表名 SET 列名1=值1, 列名2=值2, ... [WHERE 条件]" << std::endl;
+    std::cout << "  DELETE FROM 表名 [WHERE 条件]" << std::endl;
+    std::cout << "  SHOW TABLES" << std::endl;
+    std::cout << "  help - 显示帮助信息" << std::endl;
+    std::cout << "  exit/quit - 保存并退出" << std::endl;
+}
+
+//database.cpp
+#include "database.h"
+#include <fstream>
+#include <direct.h>
+#include <stdexcept>
+#include <sstream>
+#include <iostream>
+
+Database::Database(const std::string& name, const std::string& userEmail) : name(name), userEmail(userEmail) {
+    load();
+}
+
+Database::~Database() {
+    save();
+}
+
+bool Database::createTable(const std::string& tableName, const std::vector<std::pair<std::string, std::string>>& schema) {
+    if (tables.find(tableName) != tables.end()) {
+        return false; 
+    }
+    
+    tables[tableName] = std::make_shared<Table>(tableName, schema);
+    return true;
+}
+
+bool Database::dropTable(const std::string& tableName) {
+    if (tables.find(tableName) == tables.end()) {
+        return false; 
+    }
+    
+    tables.erase(tableName);
+    return true;
+}
+
+std::shared_ptr<Table> Database::getTable(const std::string& tableName) {
+    if (tables.find(tableName) == tables.end()) {
+        return nullptr; 
+    }
+    
+    return tables[tableName];
+}
+
+std::vector<std::string> Database::listTables() const {
+    std::vector<std::string> tableNames;
+    for (const auto& pair : tables) {
+        tableNames.push_back(pair.first);
+    }
+    return tableNames;
+}
+
+std::string Database::getName() const {
+    return name;
+}
+
+std::string Database::getFilePath() const {
+    char currentDir[FILENAME_MAX];
+    _getcwd(currentDir, sizeof(currentDir));
+    
+    std::string path(currentDir);
+    
+    size_t pos = path.find("test05");
+    if (pos != std::string::npos) {
+        path = path.substr(0, pos + 6);
+    }
+    
+    if (path.back() != '\\' && path.back() != '/') {
+        path += '\\';
+    }
+    
+    if (!userEmail.empty()) {
+        path += "data\\" + userEmail + "\\" + name + ".txt";
+    } else {
+        path += "data\\" + name + ".txt";
+    }
+    
+    return path;
+}
+
+bool Database::save() const {
+    std::string path = getFilePath();
+    
+    std::string directory;
+    size_t lastSlash = path.find_last_of("\\/");
+    if (lastSlash != std::string::npos) {
+        directory = path.substr(0, lastSlash);
+    }
+    
+    #ifdef _WIN32
+        _mkdir(directory.c_str());  
+    #else
+        mkdir(directory.c_str(), 0777);
+    #endif
+
+    std::ofstream file(path);
+    if (!file) {
+        std::cerr << "无法打开文件进行写入：" << path << std::endl;
+        return false;
+    }
+    
+    file << tables.size() << std::endl;
+    
+    for (const auto& pair : tables) {
+        file << pair.first << std::endl;
+        pair.second->save(file);
+    }
+    
+    file.flush();
+    
+    if (!file) {
+        std::cerr << "写入文件时发生错误：" << path << std::endl;
+        return false;
+    }
+    
+    std::cout << "数据已成功保存到：" << path << std::endl;
+    return true;
+}
+
+bool Database::load() {
+    std::ifstream file(getFilePath());
+    if (!file) {
+        return false; 
+    }
+    
+    tables.clear();
+    
+    int tableCount = 0;
+    file >> tableCount;
+    file.ignore(); 
+    
+    for (int i = 0; i < tableCount; i++) {
+        std::string tableName;
+        std::getline(file, tableName);
+        
+        int schemaSize = 0;
+        file >> schemaSize;
+        file.ignore(); 
+        
+        std::vector<std::pair<std::string, std::string>> schema;
+        for (int j = 0; j < schemaSize; j++) {
+            std::string line;
+            std::getline(file, line);
+            std::istringstream iss(line);
+            std::string columnName, columnType;
+            iss >> columnName >> columnType;
+            schema.emplace_back(columnName, columnType);
+        }
+        
+        auto table = std::make_shared<Table>(tableName, schema);
+        table->load(file);
+        tables[tableName] = table;
+    }
+    
+    return true;
+}
+
+//queryprocessor.cpp
+#include "query_processor.h"
+#include <sstream>
+#include <algorithm>
+#include <iomanip>
+#include <stdexcept>
+
+QueryProcessor::QueryProcessor(Database& db) : database(db) {}
+
+std::string QueryProcessor::processQuery(const std::string& query) {
+    this->query = query;
+    std::vector<std::string> tokens = tokenize(query);
+    
+    if (tokens.empty()) {
+        return "空查询";
+    }
+    
+    std::string command = tokens[0];
+    std::transform(command.begin(), command.end(), command.begin(), ::toupper);
+    
+    if (command == "CREATE" && tokens.size() > 1 && tokens[1] == "TABLE") {
+        return createTable(tokens);
+    } else if (command == "DROP" && tokens.size() > 1 && tokens[1] == "TABLE") {
+        return dropTable(tokens);
+    } else if (command == "INSERT" && tokens.size() > 1 && tokens[1] == "INTO") {
+        return insertInto(tokens);
+    } else if (command == "SELECT") {
+        return selectFrom(tokens);
+    } else if (command == "UPDATE") {
+        return updateTable(tokens);
+    } else if (command == "DELETE" && tokens.size() > 1 && tokens[1] == "FROM") {
+        return deleteFrom(tokens);
+    } else if (command == "SHOW" && tokens.size() > 1 && tokens[1] == "TABLES") {
+        std::vector<std::string> tables = database.listTables();
+        std::stringstream ss;
+        ss << "表列表：" << std::endl;
+        for (const auto& table : tables) {
+            ss << " - " << table << std::endl;
+        }
+        return ss.str();
+    }
+    
+    return "未知命令: " + command;
+}
+
+std::vector<std::string> QueryProcessor::tokenize(const std::string& query) {
+    std::vector<std::string> tokens;
+    std::string token;
+    bool inQuotes = false;
+    char quoteChar = 0;
+    
+    for (char c : query) {
+        if ((c == '\'' || c == '"') && (!inQuotes || quoteChar == c)) {
+            inQuotes = !inQuotes;
+            if (inQuotes) quoteChar = c;
+            continue;
+        }
+        
+        if (c == ' ' && !inQuotes) {
+            if (!token.empty()) {
+                tokens.push_back(token);
+                token.clear();
+            }
+        } else {
+            token += c;
+        }
+    }
+    
+    if (!token.empty()) {
+        tokens.push_back(token);
+    }
+    
+    return tokens;
+}
+
+std::string QueryProcessor::createTable(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 4 || tokens[3][0] != '(') {
+        return "语法错误: CREATE TABLE tableName (col1 type1, col2 type2, ...)";
+    }
+    
+    std::string tableName = tokens[2];
+    
+    std::string schemaStr = query.substr(query.find('(') + 1);
+    schemaStr = schemaStr.substr(0, schemaStr.find_last_of(')'));
+    
+    std::vector<std::pair<std::string, std::string>> schema;
+    std::istringstream ss(schemaStr);
+    std::string columnDef;
+    
+    while (std::getline(ss, columnDef, ',')) {
+        columnDef.erase(0, columnDef.find_first_not_of(" \t"));
+        columnDef.erase(columnDef.find_last_not_of(" \t") + 1);
+        
+        std::istringstream columnSS(columnDef);
+        std::string columnName, columnType;
+        columnSS >> columnName >> columnType;
+        
+        schema.emplace_back(columnName, columnType);
+    }
+    
+    if (schema.empty()) {
+        return "错误: 表定义中没有列";
+    }
+    
+    if (database.createTable(tableName, schema)) {
+        return "表 '" + tableName + "' 创建成功";
+    } else {
+        return "错误: 表 '" + tableName + "' 已存在";
+    }
+}
+
+std::string QueryProcessor::dropTable(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 3) {
+        return "语法错误: DROP TABLE tableName";
+    }
+    
+    std::string tableName = tokens[2];
+    
+    if (database.dropTable(tableName)) {
+        return "表 '" + tableName + "' 删除成功";
+    } else {
+        return "错误: 表 '" + tableName + "' 不存在";
+    }
+}
+
+std::string QueryProcessor::insertInto(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 5 || tokens[3] != "VALUES" || tokens[4][0] != '(') {
+        return "语法错误: INSERT INTO tableName VALUES (val1, val2, ...)";
+    }
+    
+    std::string tableName = tokens[2];
+    auto table = database.getTable(tableName);
+    
+    if (!table) {
+        return "错误: 表 '" + tableName + "' 不存在";
+    }
+    
+    std::string valuesStr = query.substr(query.find('(') + 1);
+    valuesStr = valuesStr.substr(0, valuesStr.find_last_of(')'));
+    
+    std::vector<std::string> values;
+    std::istringstream ss(valuesStr);
+    std::string valueStr;
+    
+    while (std::getline(ss, valueStr, ',')) {
+        valueStr.erase(0, valueStr.find_first_not_of(" \t"));
+        valueStr.erase(valueStr.find_last_not_of(" \t") + 1);
+        
+        if ((valueStr[0] == '\'' && valueStr[valueStr.size() - 1] == '\'') ||
+            (valueStr[0] == '"' && valueStr[valueStr.size() - 1] == '"')) {
+            valueStr = valueStr.substr(1, valueStr.size() - 2);
+        }
+        
+        values.push_back(valueStr);
+    }
+    
+    if (table->insert(values)) {
+        return "成功插入一条记录到表 '" + tableName + "'";
+    } else {
+        return "错误: 插入失败，列数不匹配";
+    }
+}
+
+std::string QueryProcessor::selectFrom(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 4 || tokens[1] != "*" || tokens[2] != "FROM") {
+        return "语法错误: SELECT * FROM tableName [WHERE condition]";
+    }
+    
+    std::string tableName = tokens[3];
+    auto table = database.getTable(tableName);
+    
+    if (!table) {
+        return "错误: 表 '" + tableName + "' 不存在";
+    }
+    
+    std::string condition;
+    if (tokens.size() > 4 && tokens[4] == "WHERE") {
+        for (size_t i = 5; i < tokens.size(); i++) {
+            condition += tokens[i] + " ";
+        }
+        condition = condition.substr(0, condition.size() - 1);
+    }
+    
+    std::vector<Record> results = table->select(condition);
+    return formatResults(results);
+}
+
+std::string QueryProcessor::updateTable(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 4 || tokens[2] != "SET") {
+        return "语法错误: UPDATE tableName SET col1=val1, col2=val2, ... [WHERE condition]";
+    }
+    
+    std::string tableName = tokens[1];
+    auto table = database.getTable(tableName);
+    
+    if (!table) {
+        return "错误: 表 '" + tableName + "' 不存在";
+    }
+    
+    size_t wherePos = std::find(tokens.begin(), tokens.end(), "WHERE") - tokens.begin();
+    
+    std::map<std::string, std::string> values;
+    for (size_t i = 3; i < (wherePos < tokens.size() ? wherePos : tokens.size()); i++) {
+        std::string assignment = tokens[i];
+        if (assignment.back() == ',') assignment.pop_back();
+        
+        size_t eqPos = assignment.find('=');
+        if (eqPos != std::string::npos) {
+            std::string column = assignment.substr(0, eqPos);
+            std::string value = assignment.substr(eqPos + 1);
+            
+            if ((value[0] == '\'' && value.back() == '\'') ||
+                (value[0] == '"' && value.back() == '"')) {
+                value = value.substr(1, value.size() - 2);
+            }
+            
+            values[column] = value;
+        }
+    }
+    
+    std::string condition;
+    if (wherePos < tokens.size()) {
+        for (size_t i = wherePos + 1; i < tokens.size(); i++) {
+            condition += tokens[i] + " ";
+        }
+        condition = condition.substr(0, condition.size() - 1); 
+    }
+    
+    if (table->update(values, condition)) {
+        return "成功更新表 '" + tableName + "'";
+    } else {
+        return "没有记录被更新";
+    }
+}
+
+std::string QueryProcessor::deleteFrom(const std::vector<std::string>& tokens) {
+    if (tokens.size() < 3) {
+        return "语法错误: DELETE FROM tableName [WHERE condition]";
+    }
+    
+    std::string tableName = tokens[2];
+    auto table = database.getTable(tableName);
+    
+    if (!table) {
+        return "错误: 表 '" + tableName + "' 不存在";
+    }
+    
+    std::string condition;
+    if (tokens.size() > 3 && tokens[3] == "WHERE") {
+        for (size_t i = 4; i < tokens.size(); i++) {
+            condition += tokens[i] + " ";
+        }
+        condition = condition.substr(0, condition.size() - 1); 
+    }
+    
+    if (table->deleteRecords(condition)) {
+        return "成功从表 '" + tableName + "' 删除记录";
+    } else {
+        return "没有记录被删除";
+    }
+}
+
+std::string QueryProcessor::formatResults(const std::vector<Record>& records) {
+    if (records.empty()) {
+        return "查询结果为空";
+    }
+    
+    std::stringstream ss;
+
+    auto columns = records[0].getAllValues();
+    std::vector<std::string> columnNames;
+    for (const auto& column : columns) {
+        columnNames.push_back(column.first);
+    }
+    
+    std::map<std::string, size_t> columnWidths;
+    for (const auto& name : columnNames) {
+        columnWidths[name] = name.length();
+    }
+    
+    for (const auto& record : records) {
+        auto values = record.getAllValues();
+        for (const auto& column : columnNames) {
+            columnWidths[column] = std::max(columnWidths[column], values[column].length());
+        }
+    }
+
+    ss << "+";
+    for (const auto& column : columnNames) {
+        ss << std::string(columnWidths[column] + 2, '-') << "+";
+    }
+    ss << std::endl;
+    
+    ss << "|";
+    for (const auto& column : columnNames) {
+        ss << " " << std::setw(columnWidths[column]) << column << " |";
+    }
+    ss << std::endl;
+    
+    ss << "+";
+    for (const auto& column : columnNames) {
+        ss << std::string(columnWidths[column] + 2, '-') << "+";
+    }
+    ss << std::endl;
+    
+    for (const auto& record : records) {
+        ss << "|";
+        auto values = record.getAllValues();
+        for (const auto& column : columnNames) {
+            ss << " " << std::setw(columnWidths[column]) << values[column] << " |";
+        }
+        ss << std::endl;
+    }
+    
+    ss << "+";
+    for (const auto& column : columnNames) {
+        ss << std::string(columnWidths[column] + 2, '-') << "+";
+    }
+    ss << std::endl;
+    
+    ss << records.size() << " 条记录";
+    
+    return ss.str();
+}
+
+//record.cpp
+#include "record.h"
+#include <stdexcept>
+#include <iostream>
+
+Record::Record(const std::vector<std::pair<std::string, std::string>>& schema) : schema(schema) {
+    for (const auto& column : schema) {
+        values[column.first] = "";
+    }
+}
+
+void Record::setValue(const std::string& field, const std::string& value) {
+    if (values.find(field) == values.end()) {
+        throw std::runtime_error("字段 '" + field + "' 不存在");
+    }
+    
+    values[field] = value;
+}
+
+std::string Record::getValue(const std::string& field) const {
+    auto it = values.find(field);
+    if (it == values.end()) {
+        throw std::runtime_error("字段 '" + field + "' 不存在");
+    }
+    
+    return it->second;
+}
+
+std::map<std::string, std::string> Record::getAllValues() const {
+    return values;
+}
+
+bool Record::save(std::ostream& out) const {
+    for (const auto& column : schema) {
+        out << values.at(column.first) << std::endl;
+    }
+    
+    return true;
+}
+
+bool Record::load(std::istream& in, const std::vector<std::pair<std::string, std::string>>& schema) {
+    for (const auto& column : schema) {
+        std::string value;
+        std::getline(in, value);
+        values[column.first] = value;
+    }
+    
+    return true;
+}
+
+//table.cpp
+#include "table.h"
+#include <algorithm>
+#include <sstream>
+#include <stdexcept>
+
+Table::Table(const std::string& name, const std::vector<std::pair<std::string, std::string>>& schema)
+    : name(name), schema(schema) {}
+
+Table::~Table() {}
+
+bool Table::insert(const std::vector<std::string>& values) {
+    if (values.size() != schema.size()) {
+        return false; 
+    }
+    
+    Record record(schema);
+    for (size_t i = 0; i < values.size(); i++) {
+        record.setValue(schema[i].first, values[i]);
+    }
+    
+    records.push_back(record);
+    return true;
+}
+
+std::vector<Record> Table::select(const std::string& condition) {
+    std::vector<Record> result;
+    
+    for (const auto& record : records) {
+        if (condition.empty() || evaluateCondition(record, condition)) {
+            result.push_back(record);
+        }
+    }
+    
+    return result;
+}
+
+bool Table::update(const std::map<std::string, std::string>& values, const std::string& condition) {
+    bool updated = false;
+    
+    for (auto& record : records) {
+        if (condition.empty() || evaluateCondition(record, condition)) {
+            for (const auto& pair : values) {
+                record.setValue(pair.first, pair.second);
+            }
+            updated = true;
+        }
+    }
+    
+    return updated;
+}
+
+bool Table::deleteRecords(const std::string& condition) {
+    if (condition.empty()) {
+        records.clear();
+        return true;
+    }
+    
+    size_t initialSize = records.size();
+    
+    records.erase(
+        std::remove_if(records.begin(), records.end(),
+            [this, &condition](const Record& record) {
+                return evaluateCondition(record, condition);
+            }
+        ),
+        records.end()
+    );
+    
+    return records.size() < initialSize;
+}
+
+std::string Table::getName() const {
+    return name;
+}
+
+std::vector<std::pair<std::string, std::string>> Table::getSchema() const {
+    return schema;
+}
+
+std::vector<Record> Table::getRecords() const {
+    return records;
+}
+
+bool Table::save(std::ostream& out) const {
+    out << schema.size() << std::endl;
+    
+    for (const auto& column : schema) {
+        out << column.first << " " << column.second << std::endl;
+    }
+    
+    out << records.size() << std::endl;
+    
+    for (const auto& record : records) {
+        record.save(out);
+    }
+    
+    return true;
+}
+
+bool Table::load(std::istream& in) {
+    records.clear();
+    
+    int recordCount = 0;
+    in >> recordCount;
+    in.ignore(); 
+    
+    for (int i = 0; i < recordCount; i++) {
+        Record record(schema);
+        record.load(in, schema);
+        records.push_back(record);
+    }
+    
+    return true;
+}
+
+bool Table::evaluateCondition(const Record& record, const std::string& condition) const {
+    size_t pos = condition.find('=');
+    if (pos != std::string::npos) {
+        std::string column = condition.substr(0, pos);
+        std::string value = condition.substr(pos + 1);
+        
+        column.erase(0, column.find_first_not_of(" \t"));
+        column.erase(column.find_last_not_of(" \t") + 1);
+        value.erase(0, value.find_first_not_of(" \t'\""));
+        value.erase(value.find_last_not_of(" \t'\"") + 1);
+        
+        return record.getValue(column) == value;
+    }
+    
+    return false;
+}
+
+//usermanager.cpp
+#include "user_manager.h"
+#include <direct.h>
+#include <iostream>
+#include <fstream>
+#include <regex>
+#include <functional>
+
+UserManager::UserManager() {
+    loadUsers();
+}
+
+UserManager::~UserManager() {
+    saveUsers();
+}
+
+bool UserManager::registerUser(const std::string& email, const std::string& password) {
+    if (!isEmailValid(email)) {
+        std::cout << "邮箱格式不正确!" << std::endl;
+        return false;
+    }
+    
+    if (!isPasswordValid(password)) {
+        std::cout << "密码不符合要求! 密码长度必须至少为6位" << std::endl;
+        return false;
+    }
+    
+    if (users.find(email) != users.end()) {
+        std::cout << "该邮箱已注册!" << std::endl;
+        return false;
+    }
+    
+    User newUser;
+    newUser.email = email;
+    newUser.passwordHash = hashPassword(password);
+    users[email] = newUser;
+    
+
+    std::string userDir = "data/" + email;
+    #ifdef _WIN32
+        _mkdir(userDir.c_str());
+    #else
+        mkdir(userDir.c_str(), 0777);
+    #endif
+    
+    saveUsers();
+    return true;
+}
+
+bool UserManager::loginUser(const std::string& email, const std::string& password) {
+    auto it = users.find(email);
+    if (it == users.end()) {
+        std::cout << "邮箱不存在!" << std::endl;
+        return false;
+    }
+    
+    if (it->second.passwordHash != hashPassword(password)) {
+        std::cout << "密码错误!" << std::endl;
+        return false;
+    }
+    
+    currentUser = email;
+    std::cout << "登录成功! 欢迎 " << email << std::endl;
+    return true;
+}
+
+bool UserManager::isEmailValid(const std::string& email) {
+    std::regex emailRegex(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
+    return std::regex_match(email, emailRegex);
+}
+
+bool UserManager::isPasswordValid(const std::string& password) {
+    return password.length() >= 6;
+}
+
+std::string UserManager::getCurrentUser() const {
+    return currentUser;
+}
+
+bool UserManager::loadUsers() {
+    std::ifstream file(getUsersFilePath());
+    if (!file) {
+        return false;
+    }
+    
+    users.clear();
+    
+    int userCount;
+    file >> userCount;
+    file.ignore();
+    
+    for (int i = 0; i < userCount; i++) {
+        std::string email;
+        std::string passwordHash;
+        std::getline(file, email);
+        std::getline(file, passwordHash);
+        
+        User user;
+        user.email = email;
+        user.passwordHash = passwordHash;
+        users[email] = user;
+    }
+    
+    return true;
+}
+
+bool UserManager::saveUsers() {
+    #ifdef _WIN32
+        _mkdir("data");
+    #else
+        mkdir("data", 0777);
+    #endif
+    
+    std::ofstream file(getUsersFilePath());
+    if (!file) {
+        std::cerr << "无法保存用户数据!" << std::endl;
+        return false;
+    }
+    
+    file << users.size() << std::endl;
+    
+    for (const auto& pair : users) {
+        file << pair.second.email << std::endl;
+        file << pair.second.passwordHash << std::endl;
+    }
+    
+    return true;
+}
+
+std::string UserManager::hashPassword(const std::string& password) {
+    std::hash<std::string> hasher;
+    return std::to_string(hasher(password));
+}
+
+std::string UserManager::getUsersFilePath() const {
+    return "data/users.dat";
+}
+
+//main.cpp
+#include "command_interface.h"
+#include "database.h"
+#include "user_manager.h"
+#include <iostream>
+#include <string>
+
+enum class AuthAction {
+    LOGIN,
+    REGISTER,
+    EXIT
+};
+
+AuthAction showAuthMenu() {
+    std::cout << "\n===== DBMS认证系统 =====\n";
+    std::cout << "1. 登录\n";
+    std::cout << "2. 注册\n";
+    std::cout << "3. 退出\n";
+    std::cout << "请选择操作 (1-3): ";
+    
+    int choice;
+    std::cin >> choice;
+    std::cin.ignore(); 
+    
+    switch (choice) {
+        case 1: return AuthAction::LOGIN;
+        case 2: return AuthAction::REGISTER;
+        case 3: return AuthAction::EXIT;
+        default: 
+            std::cout << "无效选择，请重试\n";
+            return showAuthMenu();
+    }
+}
+
+int main() {
+    std::cout << "DBMS启动中...\n";
+    
+    UserManager userManager;
+    std::string email, password;
+    bool authenticated = false;
+    
+    while (!authenticated) {
+        AuthAction action = showAuthMenu();
+        
+        switch (action) {
+            case AuthAction::LOGIN:
+                std::cout << "请输入邮箱: ";
+                std::getline(std::cin, email);
+                std::cout << "请输入密码: ";
+                std::getline(std::cin, password);
+                authenticated = userManager.loginUser(email, password);
+                break;
+                
+            case AuthAction::REGISTER:
+                std::cout << "请输入邮箱: ";
+                std::getline(std::cin, email);
+                std::cout << "请输入密码: ";
+                std::getline(std::cin, password);
+                if (userManager.registerUser(email, password)) {
+                    std::cout << "注册成功! 现在可以登录\n";
+                }
+                system("pause");
+                system("cls");
+                break;
+                
+            case AuthAction::EXIT:
+                std::cout << "感谢使用，再见!\n";
+                return 0;
+        }
+    }
+    
+    // 用户已验证，现在请求数据库名称
+    std::string dbName;
+    std::cout << "请输入数据库名称: ";
+    std::getline(std::cin, dbName);
+    
+    // 使用当前用户的邮箱创建数据库实例
+    Database db(dbName, userManager.getCurrentUser());
+    CommandInterface interface(db);
+    
+    interface.run();
+    
+    return 0;
+}

@@ -1,0 +1,319 @@
+floyd.h
+#include<iostream>
+#include<queue>
+#include<vector>
+#include<string>
+using namespace std;
+
+#define MAX 999
+#define MVNum 20
+
+typedef int VertexType;
+typedef int ArcType;
+
+struct Edge {
+    int dest;   // 目标顶点
+    int weight; // 权
+};
+
+class Graph
+{
+public:
+    void Create();
+    int LocateVex(VertexType u);
+    int firstadj(int v);
+    int nextadj(int v, int w);
+    void Floyd()
+    void print_path();
+    void BuildAdjList();
+    void SortAdjacentEdges();
+    void QueryPath(int start, int end);
+private:
+    VertexType vexs[MVNum]; 
+    ArcType arcs[MVNum][MVNum]; 
+    ArcType path[MVNum][MVNum]; 
+    int vexnum, arcnum;
+    vector<vector<Edge>> adjList;
+};
+floyd.cpp
+#include "floyd.h"
+#include "heapsort.h"
+
+int Graph::LocateVex(VertexType u)
+{//查找Graph中的顶点u，并返回其对应在顶点表中的下标，未找到则返回-1
+    int i;
+    for (i = 0; i < this->vexnum; i++)
+    {
+        if (u == this->vexs[i])
+            return i;
+    }
+    return -1;
+}
+
+int Graph::firstadj(int v)
+{
+    for (int i = 0; i < this->vexnum; i++)
+    {
+        if (this->arcs[v][i] != MAX)
+            return i;
+    }
+    return -1;
+}
+
+int Graph::nextadj(int v, int w)
+{
+    for (int i = w + 1; i < this->vexnum; i++)
+    {
+        if (this->arcs[v][i] != MAX)
+            return i;
+    }
+    return -1;
+}
+
+void Graph::Create()
+{
+    cout << "请输入总结点数和总边数:";
+    cin >> this->vexnum >> this->arcnum;//输入总顶点数和总边数
+    for (int i = 0; i < this->vexnum; i++)
+    {
+        this->vexs[i] = i + 1;
+    }
+    //初始化邻接矩阵
+    for (int i = 0; i < this->vexnum; i++)
+    {
+        for (int j = 0; j < this->vexnum; j++)
+        {
+            if(i == j)
+                this->arcs[i][j] = 0;
+            else
+                this->arcs[i][j] = this->arcs[j][i] = MAX;
+        }
+    }
+    //构造邻接矩阵
+    for (int i = 0; i < this->arcnum; i++)
+    {
+        int v1, v2, w;
+        cout << "请输入第" << i + 1 << "条边的两个顶点及其对应的权值:"; 
+        cin >> v1 >> v2 >> w;
+        int m = LocateVex(v1);
+        int n = LocateVex(v2);
+        this->arcs[m][n] = w; 
+        this->arcs[n][m] = w; 
+    }
+    //初始化路径
+    for (int i = 0; i < this->vexnum; i++)
+    {
+        for (int j = 0; j < this->vexnum; j++)
+        {
+            this->path[i][j] = j;
+        }
+    }
+    return;
+}
+
+void Graph::Floyd()
+{
+    for (int k = 0; k < this->vexnum; k++)
+        for (int i = 0; i < this->vexnum; i++)
+            for (int j = 0; j < this->vexnum; j++)
+                if (this->arcs[i][k] + this->arcs[k][j] < this->arcs[i][j])
+                {
+                    this->arcs[i][j] = this->arcs[i][k] + this->arcs[k][j];
+                    this->path[i][j] = this->path[i][k];
+                }
+
+    for (int i = 0; i < this->vexnum; i++)
+    {
+        for (int j = 0; j < this->vexnum; j++)
+        {
+            if (i == j)
+                this->arcs[i][j] = 0;
+        }
+    }
+    // this->Show();
+}
+
+void Graph::print_path()
+{
+    cout << "各个顶点对的最短路径：" << endl;
+    int row = 0;
+    int col = 0;
+    int temp = 0;
+    for (row = 0; row < this->vexnum; row++)
+    {
+        for (col = row + 1; col < this->vexnum; col++)
+        {
+            if (this->arcs[row][col] != MAX)
+            {
+                cout << "v" << to_string(row + 1) << "---" << "v" << to_string(col + 1) << " weight: " << this->arcs[row][col] << " path: " << " v" << to_string(row + 1);
+                temp = path[row][col];
+                //循环输出途径的每条路径。
+                while (temp != col)
+                {
+                    cout << "-->" << "v" << to_string(temp + 1);
+                    temp = path[temp][col];
+                }
+                cout << "-->" << "v" << to_string(col + 1) << endl;
+            }
+        }
+        cout << endl;
+    }
+}
+
+void Graph::BuildAdjList() {
+
+    adjList.resize(vexnum);
+
+    for(int i = 0; i < vexnum; i++) {
+        for(int j = 0; j < vexnum; j++) {
+            if(arcs[i][j] != MAX && i != j) {
+                Edge e;
+                e.dest = j;
+                e.weight = arcs[i][j];
+                adjList[i].push_back(e);
+            }
+        }
+    }
+}
+
+void Graph::SortAdjacentEdges() {
+    for(int i = 0; i < vexnum; i++) {
+        if(!adjList[i].empty()) {
+            int size = adjList[i].size();
+            int* weights = new int[size + 1]; 
+
+            for(int j = 0; j < size; j++) {
+                weights[j + 1] = adjList[i][j].weight;
+            }
+
+            HeapSort(weights, size);
+
+            vector<Edge> sortedEdges;
+            for(int j = 1; j <= size; j++) {
+                for(auto it = adjList[i].begin(); it != adjList[i].end(); ++it) {
+                    if(it->weight == weights[j]) {
+                        sortedEdges.push_back(*it);
+                        adjList[i].erase(it);
+                        break;
+                    }
+                }
+            }
+
+            adjList[i] = sortedEdges;
+
+            delete[] weights;
+        }
+    }
+}
+
+void Graph::QueryPath(int start, int end) {
+    start--;
+    end--;
+
+    if(start < 0 || start >= vexnum || end < 0 || end >= vexnum) {
+        cout << "错误：顶点编号无效！有效范围为1至" << vexnum << endl;
+        return;
+    }
+
+    if(arcs[start][end] == MAX) {
+        cout << "从顶点v" << start+1 << "到顶点v" << end+1 << "没有可达路径。" << endl;
+        return;
+    }
+
+    cout << "\n从顶点v" << start+1 << "到顶点v" << end+1 << "的最短路径:" << endl;
+    cout << "距离: " << arcs[start][end] << endl;
+
+    vector<int> fullPath;
+    fullPath.push_back(start);
+
+    int temp = start;
+    while(temp != end) {
+        temp = path[temp][end];
+        fullPath.push_back(temp);
+    }
+
+    cout << "路径: ";
+    for(size_t i = 0; i < fullPath.size(); i++) {
+        cout << "v" << fullPath[i]+1;
+        if(i < fullPath.size()-1) cout << " → ";
+    }
+    cout << endl;
+
+    cout << "路径上的边:" << endl;
+    for(size_t i = 0; i < fullPath.size()-1; i++) {
+        int from = fullPath[i];
+        int to = fullPath[i+1];
+        int weight = arcs[from][to];
+        cout << "  v" << from+1 << " → v" << to+1 << " (权重: " << weight << ")" << endl;
+    }
+}
+
+heapsort.h
+void HeapAdjust(int *L, int s, int m);
+void HeapSort(int *L,int x);
+
+heapsort.cpp
+#include "heapsort.h"
+#include <algorithm>
+#include <iostream>
+
+void HeapAdjust(int *L, int s, int m){
+    int temp,j;
+    temp = L[s];
+    for(j = 2*s; j <= m; j*=2){
+        if(j < m && L[j] < L[j+1])
+            ++j;
+        if(temp >= L[j])
+            break;
+        L[s] = L[j];
+        s = j;
+    }
+    L[s] = temp;
+}
+
+void HeapSort(int *L, int x){
+    int i;
+    for(i = x/2; i > 0; i--)
+        HeapAdjust(L,i,x);
+    for(i = x; i > 1; i--){
+        std::swap(L[1], L[i]);
+        HeapAdjust(L,1,i-1);
+    }
+}
+
+main.cpp
+#include "floyd.h"
+#include <iostream>
+using namespace std;
+
+int main() {    
+    Graph g;
+    
+    g.Create();
+    
+    g.BuildAdjList();
+    
+    g.SortAdjacentEdges();
+    
+    g.Floyd();
+    
+    g.print_path();
+    
+    int choice = 1;
+    while(choice) {
+        int start, end;
+        cout << "\n请输入要查询的起点和终点 (顶点编号): ";
+        cin >> start >> end;
+        
+        g.QueryPath(start, end);
+        
+        cout << "\n是否继续查询? (1:是，0:否): ";
+        cin >> choice;
+    }
+    
+
+    system("pause");
+
+    return 0;
+}
+

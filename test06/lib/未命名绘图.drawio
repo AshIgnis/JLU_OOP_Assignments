@@ -1,0 +1,73 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.16 Chrome/132.0.6834.196 Electron/34.2.0 Safari/537.36" version="26.0.16">
+  <diagram name="第 1 页" id="fQ5sKgKqEKF2raeYZhal">
+    <mxGraphModel dx="1461" dy="823" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-1" target="VusxVd5S-EKjwgQCNx6p-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-1" target="VusxVd5S-EKjwgQCNx6p-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-1" value="创建顶层复合节点" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="90" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-3" target="VusxVd5S-EKjwgQCNx6p-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-3" target="VusxVd5S-EKjwgQCNx6p-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-3" value="创建中层复合节点" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-4" target="VusxVd5S-EKjwgQCNx6p-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-4" value="创建下层复合节点" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-5" target="VusxVd5S-EKjwgQCNx6p-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-5" target="VusxVd5S-EKjwgQCNx6p-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-5" value="为各节点添加叶节点" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="430" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-28" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-7" target="VusxVd5S-EKjwgQCNx6p-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-7" value="建立节点间的父子关系" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="540" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="VusxVd5S-EKjwgQCNx6p-8" target="VusxVd5S-EKjwgQCNx6p-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-8" value="通过根节点统一调用多态方法" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="354" y="640" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-13" value="例：创建总部" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="85" width="30" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-17" value="例：创建分公司" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="190" width="20" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-19" value="例：创建办事处" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="300" width="20" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-20" value="例：为各组织添加下属部门" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="420" width="20" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-21" value="例：利用add函数建立各部门所属关系" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="530" width="20" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="VusxVd5S-EKjwgQCNx6p-22" value="例：利用多态体现组织构架和功能" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.annotation_1;align=left;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="630" width="20" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

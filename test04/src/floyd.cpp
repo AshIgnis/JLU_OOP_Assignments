@@ -67,19 +67,19 @@ void Graph::Create()
 	for (int i = 0; i < this->arcnum; i++)
     {
         int v1, v2, w;
-        cout << "请输入第" << i + 1 << "条边的两个顶点及其对应的权值:"; // 修改提示语
+        cout << "请输入第" << i + 1 << "条边的两个顶点及其对应的权值:"; 
         cin >> v1 >> v2 >> w;
         int m = LocateVex(v1);
         int n = LocateVex(v2);
-        this->arcs[m][n] = w; // 设置v1到v2的边
-        this->arcs[n][m] = w; // 设置v2到v1的边，实现无向图
+        this->arcs[m][n] = w; 
+        this->arcs[n][m] = w; 
     }
 	//初始化路径
 	for (int i = 0; i < this->vexnum; i++)
 	{
 		for (int j = 0; j < this->vexnum; j++)
 		{
-			this->path[i][j] = j;//矩阵P的初值则为各个边的终点顶点的下标
+			this->path[i][j] = j;
 		}
 	}
 	return;
